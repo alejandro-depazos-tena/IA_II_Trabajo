@@ -25,6 +25,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY api_heart.py .
 COPY heart_model_wrapper.py .
 COPY heart_disease_model.joblib .
+COPY static ./static
 
 # Crear usuario no-root para seguridad
 RUN useradd -m -u 1000 appuser && \

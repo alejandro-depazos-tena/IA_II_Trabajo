@@ -1,4 +1,6 @@
 from fastapi import FastAPI, HTTPException, Response
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from typing import List, Dict
 import joblib
@@ -16,6 +18,9 @@ app = FastAPI(
     description="API para predecir enfermedad cardíaca usando Machine Learning",
     version="1.0.0"
 )
+
+# Servir frontend estático
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Variables globales
 model = None
@@ -63,16 +68,16 @@ async def load_model():
 class PatientData(BaseModel):
     age: int = Field(..., ge=1, le=120)
     sex: int = Field(..., ge=0, le=1)
-    chest_pain: int = Field(..., ge=1, le=4)
-    rest_blood_pressure: int = Field(..., ge=50, le=250)
-    cholesterol: int = Field(..., ge=100, le=600)
+    chest: int = Field(..., ge=1, le=4)
+    resting_blood_pressure: int = Field(..., ge=50, le=250)
+    serum_cholestoral: int = Field(..., ge=100, le=600)
     fasting_blood_sugar: int = Field(..., ge=0, le=1)
-    rest_ecg: int = Field(..., ge=0, le=2)
-    max_heart_rate: int = Field(..., ge=60, le=220)
-    exercise_angina: int = Field(..., ge=0, le=1)
+    resting_electrocardiographic_results: int = Field(..., ge=0, le=2)
+    maximum_heart_rate_achieved: int = Field(..., ge=60, le=220)
+    exercise_induced_angina: int = Field(..., ge=0, le=1)
     oldpeak: float = Field(..., ge=0, le=10)
     slope: int = Field(..., ge=1, le=3)
-    vessels: int = Field(..., ge=0, le=3)
+    number_of_major_vessels: int = Field(..., ge=0, le=3)
     thal: int = Field(..., ge=3, le=7)
 
 class PredictionResponse(BaseModel):
@@ -94,6 +99,7 @@ async def root():
         "version": "1.0.0",
         "endpoints": {
             "docs": "/docs",
+            "ui": "/ui",
             "health": "/health",
             "info": "/info",
             "predict": "/predict",
@@ -101,6 +107,10 @@ async def root():
             "metrics": "/metrics"
         }
     }
+
+@app.get("/ui")
+async def ui():
+    return FileResponse("static/index.html")
 
 @app.get("/health")
 async def health_check():
