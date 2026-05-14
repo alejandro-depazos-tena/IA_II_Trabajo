@@ -1,5 +1,5 @@
-# Imagen base oficial de Python 3.9 (versión slim = ligera)
-FROM python:3.9-slim
+# Imagen base oficial de Python 3.13 (versión slim = ligera)
+FROM python:3.13-slim
 
 # Metadata de la imagen
 LABEL maintainer="tu-email@ejemplo.com"
