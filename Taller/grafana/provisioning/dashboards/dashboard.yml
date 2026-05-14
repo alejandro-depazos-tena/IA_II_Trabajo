@@ -1,0 +1,11 @@
+apiVersion: 1
+
+dashboards:
+  - name: heart-api
+    orgId: 1
+    folder: "Heart API"
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards
