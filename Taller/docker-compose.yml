@@ -1,7 +1,7 @@
 services:
   heart-api:
     build: .
-    image: heart-api:v1.0
+    image: heart-api:${MODEL_TAG:-latest}
     container_name: heart-api-container
     ports:
       - "8000:8000"

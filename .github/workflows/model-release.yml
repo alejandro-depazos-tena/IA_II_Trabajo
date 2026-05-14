@@ -1,0 +1,46 @@
+name: Model Release (Local Redeploy)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      model_tag:
+        description: "Tag del modelo (ej: model-v1.0.0)"
+        required: true
+        default: "model-v1.0.0"
+
+jobs:
+  build-and-redeploy:
+    runs-on: self-hosted
+    env:
+      MODEL_TAG: ${{ inputs.model_tag || format('model-v{0}', github.run_number) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show model tag
+        shell: pwsh
+        run: |
+          Write-Host "Using model tag: $env:MODEL_TAG"
+
+      - name: Build image with model tag
+        shell: pwsh
+        working-directory: ./Taller
+        run: |
+          docker build -t heart-api:$env:MODEL_TAG .
+          docker tag heart-api:$env:MODEL_TAG heart-api:latest
+
+      - name: Redeploy with Docker Compose
+        shell: pwsh
+        working-directory: ./Taller
+        run: |
+          $env:MODEL_TAG = $env:MODEL_TAG
+          docker compose up -d --no-build
+
+      - name: Smoke check (health)
+        shell: pwsh
+        run: |
+          Start-Sleep -Seconds 3
+          Invoke-WebRequest -Uri http://localhost:8000/health -UseBasicParsing
