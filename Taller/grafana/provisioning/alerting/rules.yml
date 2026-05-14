@@ -1,0 +1,84 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: Heart API Alerts
+    folder: Heart API
+    interval: 1m
+    rules:
+      - uid: heart-api-errors
+        title: Errores por minuto altos
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              expr: rate(prediction_errors_total[1m]) * 60
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              type: reduce
+              expression: A
+              reducer: last
+              refId: B
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              refId: C
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [1]
+                  operator:
+                    type: and
+                  reducer:
+                    type: last
+                  type: query
+        for: 1m
+        annotations:
+          summary: "Errores por minuto > 1"
+          description: "La API supera 1 error/minuto."
+        labels:
+          severity: warning
+      - uid: heart-api-latency
+        title: Latencia p95 elevada
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              expr: histogram_quantile(0.95, sum(rate(prediction_duration_seconds_bucket{endpoint="predict"}[5m])) by (le))
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              type: reduce
+              expression: A
+              reducer: last
+              refId: B
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              refId: C
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0.5]
+                  operator:
+                    type: and
+                  reducer:
+                    type: last
+                  type: query
+        for: 2m
+        annotations:
+          summary: "Latencia p95 alta"
+          description: "Latencia p95 de /predict supera 0.5s."
+        labels:
+          severity: warning
