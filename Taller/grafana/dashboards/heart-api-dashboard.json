@@ -14,7 +14,7 @@
       "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4},
       "targets": [
         {
-          "expr": "sum(predictions_total)",
+          "expr": "sum(predictions_total) or vector(0)",
           "refId": "A"
         }
       ],
@@ -31,7 +31,7 @@
       "gridPos": {"x": 6, "y": 0, "w": 6, "h": 4},
       "targets": [
         {
-          "expr": "prediction_errors_total",
+          "expr": "prediction_errors_total or vector(0)",
           "refId": "A"
         }
       ],
@@ -56,7 +56,148 @@
       "gridPos": {"x": 12, "y": 0, "w": 6, "h": 4},
       "targets": [
         {
-          "expr": "active_predictions",
+          "expr": "active_predictions or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "piechart",
+      "title": "Distribución de resultados (circular)",
+      "gridPos": {"x": 18, "y": 0, "w": 6, "h": 8},
+      "targets": [
+        {
+          "expr": "sum by (outcome) (prediction_outcome_total) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "displayLabels": ["name", "percent"],
+        "legendDisplayMode": "table",
+        "legendPlacement": "right"
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Predicciones por nivel de riesgo (negocio)",
+      "gridPos": {"x": 18, "y": 8, "w": 6, "h": 8},
+      "targets": [
+        {
+          "expr": "sum by (risk_level) (prediction_outcome_total) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Pacientes evaluados (total)",
+      "gridPos": {"x": 18, "y": 16, "w": 6, "h": 4},
+      "targets": [
+        {
+          "expr": "sum(prediction_outcome_total) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "title": "% pacientes con enfermedad",
+      "gridPos": {"x": 18, "y": 20, "w": 6, "h": 4},
+      "targets": [
+        {
+          "expr": "100 * (sum(prediction_outcome_total{outcome=\"Disease\"}) / clamp_min(sum(prediction_outcome_total), 1)) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "title": "% pacientes riesgo alto",
+      "gridPos": {"x": 18, "y": 24, "w": 6, "h": 4},
+      "targets": [
+        {
+          "expr": "100 * (sum(prediction_outcome_total{risk_level=\"High\"}) / clamp_min(sum(prediction_outcome_total), 1)) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "barchart",
+      "title": "Pacientes por riesgo",
+      "gridPos": {"x": 0, "y": 36, "w": 12, "h": 8},
+      "targets": [
+        {
+          "expr": "sum by (risk_level) (prediction_outcome_total) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "barchart",
+      "title": "Pacientes por resultado",
+      "gridPos": {"x": 12, "y": 36, "w": 12, "h": 8},
+      "targets": [
+        {
+          "expr": "sum by (outcome) (prediction_outcome_total) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Distribución riesgo vs resultado",
+      "gridPos": {"x": 0, "y": 44, "w": 24, "h": 8},
+      "targets": [
+        {
+          "expr": "sum by (outcome, risk_level) (prediction_outcome_total) or vector(0)",
           "refId": "A"
         }
       ],
@@ -73,7 +214,7 @@
       "gridPos": {"x": 0, "y": 4, "w": 12, "h": 8},
       "targets": [
         {
-          "expr": "sum(rate(predictions_total[1m])) * 60",
+          "expr": "(sum(rate(predictions_total[1m])) * 60) or vector(0)",
           "refId": "A"
         }
       ],
@@ -90,7 +231,7 @@
       "gridPos": {"x": 12, "y": 4, "w": 12, "h": 8},
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum(rate(prediction_duration_seconds_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(prediction_duration_seconds_bucket[5m])) by (le)) or vector(0)",
           "refId": "A"
         }
       ],
@@ -107,7 +248,7 @@
       "gridPos": {"x": 0, "y": 12, "w": 12, "h": 8},
       "targets": [
         {
-          "expr": "sum(rate(prediction_duration_seconds_sum[5m])) / sum(rate(prediction_duration_seconds_count[5m]))",
+          "expr": "(sum(rate(prediction_duration_seconds_sum[5m])) / sum(rate(prediction_duration_seconds_count[5m]))) or vector(0)",
           "refId": "A"
         }
       ],
@@ -124,7 +265,7 @@
       "gridPos": {"x": 12, "y": 12, "w": 12, "h": 8},
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum(rate(prediction_duration_seconds_bucket[5m])) by (le, endpoint))",
+          "expr": "histogram_quantile(0.95, sum(rate(prediction_duration_seconds_bucket[5m])) by (le, endpoint)) or vector(0)",
           "refId": "A"
         }
       ],
@@ -141,7 +282,7 @@
       "gridPos": {"x": 0, "y": 20, "w": 12, "h": 8},
       "targets": [
         {
-          "expr": "rate(prediction_errors_total[1m]) * 60",
+          "expr": "(rate(prediction_errors_total[1m]) * 60) or vector(0)",
           "refId": "A"
         }
       ],
@@ -157,6 +298,107 @@
               {"color": "red", "value": 1}
             ]
           }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Success rate (%)",
+      "gridPos": {"x": 12, "y": 20, "w": 6, "h": 4},
+      "targets": [
+        {
+          "expr": "100 * (1 - ((prediction_errors_total or vector(0)) / clamp_min(sum(predictions_total) or vector(0), 1)))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "red", "value": null},
+              {"color": "orange", "value": 95},
+              {"color": "green", "value": 99}
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Predictions by endpoint (rpm)",
+      "gridPos": {"x": 12, "y": 24, "w": 12, "h": 8},
+      "targets": [
+        {
+          "expr": "(sum(rate(predictions_total[1m])) by (endpoint) * 60) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "req/min"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Prometheus up (should be 1)",
+      "gridPos": {"x": 18, "y": 0, "w": 6, "h": 4},
+      "targets": [
+        {
+          "expr": "up{job=\"heart-api\"} or vector(1)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "red", "value": null},
+              {"color": "green", "value": 1}
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Prometheus scrape interval (seconds)",
+      "gridPos": {"x": 0, "y": 28, "w": 12, "h": 8},
+      "targets": [
+        {
+          "expr": "scrape_interval_seconds or vector(15)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Dashboard heartbeat",
+      "gridPos": {"x": 12, "y": 28, "w": 12, "h": 8},
+      "targets": [
+        {
+          "expr": "1 + 0 * vector(1)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
         },
         "overrides": []
       }

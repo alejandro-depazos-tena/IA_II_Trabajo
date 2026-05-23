@@ -50,13 +50,19 @@ PREDICTION_ERRORS = Counter(
     'Número total de errores en predicciones'
 )
 
+PREDICTION_OUTCOME_TOTAL = Counter(
+    'prediction_outcome_total',
+    'Conteo de resultados de predicción por clase y nivel de riesgo',
+    ['outcome', 'risk_level']
+)
+
 # Cargar modelo al iniciar
 @app.on_event("startup")
 async def load_model():
     global model, wrapper, model_loaded_time
     try:
         print("📥 Cargando modelo...")
-        model = joblib.load("heart_disease_model.joblib")
+        model = joblib.load("models/heart_disease_model.joblib")
         wrapper = HeartDiseaseWrapper(model)
         model_loaded_time = datetime.now()
         print("✅ Modelo cargado correctamente")
@@ -158,6 +164,10 @@ async def predict(patient: PatientData):
         # NUEVO: Registrar métricas
         PREDICTIONS_TOTAL.labels(endpoint='predict').inc()
         PREDICTION_DURATION.labels(endpoint='predict').observe(inference_time)
+        PREDICTION_OUTCOME_TOTAL.labels(
+            outcome=result['prediction_label'],
+            risk_level=result['risk_level']
+        ).inc()
 
         return result
 
@@ -185,6 +195,12 @@ async def predict_batch(request: BatchPredictionRequest):
         # NUEVO: Registrar métricas
         PREDICTIONS_TOTAL.labels(endpoint='predict_batch').inc(len(results))
         PREDICTION_DURATION.labels(endpoint='predict_batch').observe(inference_time)
+
+        for item in results:
+            PREDICTION_OUTCOME_TOTAL.labels(
+                outcome=item['prediction_label'],
+                risk_level=item['risk_level']
+            ).inc()
 
         return {
             "predictions": results,
